@@ -18,28 +18,23 @@ public class Inventory {
         this.name = name;
         this.quantity = quantity;
         this.price = price;
-        // Perform any additional operations required for item creation
     }
 
     public void updateItem(String name, int quantity, double price) {
         this.name = name;
         this.quantity = quantity;
         this.price = price;
-        // Perform any additional operations required for item update
     }
 
     public String getItem() {
         return name;
-        // Perform any additional operations required for retrieving an item
     }
 
     public String getAllItems() {
         return name;
-        // Perform any additional operations required for retrieving all items
     }
 
     public void deleteItem() {
-        // Perform any operations required for deleting an item
     }
 }
 
