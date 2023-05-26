@@ -1,7 +1,13 @@
 package com.example.Inventory.model;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
+@Entity
 public class Item {
-    private long itemId;
+
+    @Id
+    private Long itemId;
     private String name;
     private long userId;
     private double price;
