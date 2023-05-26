@@ -69,6 +69,16 @@ public final class Inventory {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_inventory_DeleteItemResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_inventory_DecreaseItemQuantityRequest_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_inventory_DecreaseItemQuantityRequest_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_inventory_DecreaseItemQuantityResponse_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_inventory_DecreaseItemQuantityResponse_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -96,17 +106,23 @@ public final class Inventory {
       "\022$\n\004data\030\003 \001(\0132\026.inventory.GetItemData\"\037" +
       "\n\021DeleteItemRequest\022\n\n\002id\030\001 \001(\003\"3\n\022Delet" +
       "eItemResponse\022\016\n\006status\030\001 \001(\003\022\r\n\005error\030\002" +
-      " \001(\t2\215\003\n\020InventoryService\022K\n\nCreateItem\022" +
-      "\034.inventory.CreateItemRequest\032\035.inventor" +
-      "y.CreateItemResponse\"\000\022B\n\007GetItem\022\031.inve" +
-      "ntory.GetItemRequest\032\032.inventory.GetItem" +
-      "Response\"\000\022N\n\013GetAllItems\022\035.inventory.Ge" +
-      "tAllItemsRequest\032\036.inventory.GetAllItems" +
-      "Response\"\000\022K\n\nUpdateItem\022\034.inventory.Upd" +
-      "ateItemRequest\032\035.inventory.UpdateItemRes" +
-      "ponse\"\000\022K\n\nDeleteItem\022\034.inventory.Delete" +
-      "ItemRequest\032\035.inventory.DeleteItemRespon" +
-      "se\"\000B\031\n\025com.example.InventoryP\001b\006proto3"
+      " \001(\t\";\n\033DecreaseItemQuantityRequest\022\n\n\002i" +
+      "d\030\001 \001(\003\022\020\n\010quantity\030\002 \001(\003\"=\n\034DecreaseIte" +
+      "mQuantityResponse\022\016\n\006status\030\001 \001(\003\022\r\n\005err" +
+      "or\030\002 \001(\t2\370\003\n\020InventoryService\022K\n\nCreateI" +
+      "tem\022\034.inventory.CreateItemRequest\032\035.inve" +
+      "ntory.CreateItemResponse\"\000\022B\n\007GetItem\022\031." +
+      "inventory.GetItemRequest\032\032.inventory.Get" +
+      "ItemResponse\"\000\022N\n\013GetAllItems\022\035.inventor" +
+      "y.GetAllItemsRequest\032\036.inventory.GetAllI" +
+      "temsResponse\"\000\022K\n\nUpdateItem\022\034.inventory" +
+      ".UpdateItemRequest\032\035.inventory.UpdateIte" +
+      "mResponse\"\000\022K\n\nDeleteItem\022\034.inventory.De" +
+      "leteItemRequest\032\035.inventory.DeleteItemRe" +
+      "sponse\"\000\022i\n\024DecreaseItemQuantity\022&.inven" +
+      "tory.DecreaseItemQuantityRequest\032\'.inven" +
+      "tory.DecreaseItemQuantityResponse\"\000B\031\n\025c" +
+      "om.example.InventoryP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -177,6 +193,18 @@ public final class Inventory {
     internal_static_inventory_DeleteItemResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_inventory_DeleteItemResponse_descriptor,
+        new java.lang.String[] { "Status", "Error", });
+    internal_static_inventory_DecreaseItemQuantityRequest_descriptor =
+      getDescriptor().getMessageTypes().get(11);
+    internal_static_inventory_DecreaseItemQuantityRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_inventory_DecreaseItemQuantityRequest_descriptor,
+        new java.lang.String[] { "Id", "Quantity", });
+    internal_static_inventory_DecreaseItemQuantityResponse_descriptor =
+      getDescriptor().getMessageTypes().get(12);
+    internal_static_inventory_DecreaseItemQuantityResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_inventory_DecreaseItemQuantityResponse_descriptor,
         new java.lang.String[] { "Status", "Error", });
   }
 
