@@ -40,6 +40,9 @@ class InventoryServiceTest {
     @Mock
     private StreamObserver<DeleteItemResponse> deleteItemResponseObserver;
 
+    @Mock
+    private StreamObserver<DecreaseItemQuantityResponse> decreaseItemQuantityResponseObserver;
+
     @Captor
     private ArgumentCaptor<GetItemResponse> getItemResponseCaptor;
 
@@ -51,6 +54,9 @@ class InventoryServiceTest {
 
     @Captor
     private ArgumentCaptor<DeleteItemResponse> deleteItemResponseCaptor;
+
+    @Captor
+    private ArgumentCaptor<DecreaseItemQuantityResponse> decreaseItemQuantityCaptor;
 
     private InventoryService inventoryService;
 
@@ -399,5 +405,115 @@ class InventoryServiceTest {
             verify(itemDao, never()).delete(any(Item.class));
         }
 
+        @Nested
+        public class DecreaseItemQuantityTest {
+            @Test
+            void expectsToDecreaseItemQuantityAndReturnStatus200ForSufficientQuantity() {
+                int itemId = 123;
+                int currentQuantity = 10;
+                int quantityToDecrease = 5;
+
+                Item item = new Item("Test Item", 1001, 9.99, currentQuantity);
+                item.setItemId((long) itemId);
+
+                when(itemDao.findById((long) itemId)).thenReturn(Optional.of(item));
+
+                DecreaseItemQuantityRequest request = DecreaseItemQuantityRequest.newBuilder()
+                        .setId(itemId)
+                        .setQuantity(quantityToDecrease)
+                        .build();
+
+                InventoryService inventoryService = new InventoryService(itemDao);
+                inventoryService.decreaseItemQuantity(request, decreaseItemQuantityResponseObserver);
+
+                verify(decreaseItemQuantityResponseObserver).onNext(decreaseItemQuantityCaptor.capture());
+                verify(decreaseItemQuantityResponseObserver).onCompleted();
+
+                DecreaseItemQuantityResponse response = decreaseItemQuantityCaptor.getValue();
+                assertEquals(200, response.getStatus());
+
+                assertEquals(currentQuantity - quantityToDecrease, item.getQuantity());
+                verify(itemDao).save(item);
+            }
+
+            @Test
+            void expectsToReturnStatus400InsufficientQuantityForNotEnoughQuantity() {
+                int itemId = 123;
+                int currentQuantity = 5;
+                int quantityToDecrease = 10;
+
+                Item item = new Item("Test Item", 1001, 9.99, currentQuantity);
+                item.setItemId((long) itemId);
+
+                when(itemDao.findById((long) itemId)).thenReturn(Optional.of(item));
+
+                DecreaseItemQuantityRequest request = DecreaseItemQuantityRequest.newBuilder()
+                        .setId(itemId)
+                        .setQuantity(quantityToDecrease)
+                        .build();
+
+                InventoryService inventoryService = new InventoryService(itemDao);
+                inventoryService.decreaseItemQuantity(request, decreaseItemQuantityResponseObserver);
+
+                verify(decreaseItemQuantityResponseObserver).onNext(decreaseItemQuantityCaptor.capture());
+                verify(decreaseItemQuantityResponseObserver).onCompleted();
+
+                DecreaseItemQuantityResponse response = decreaseItemQuantityCaptor.getValue();
+                assertEquals(400, response.getStatus());
+                assertEquals("Insufficient quantity", response.getError());
+
+                assertEquals(currentQuantity, item.getQuantity());
+                verify(itemDao, never()).save(any(Item.class));
+            }
+
+            @Test
+            void expectsToReturnStatus404NotFoundForNonExistingItem() {
+                int itemId = 123;
+
+                when(itemDao.findById((long) itemId)).thenReturn(Optional.empty());
+
+                DecreaseItemQuantityRequest request = DecreaseItemQuantityRequest.newBuilder()
+                        .setId(itemId)
+                        .setQuantity(5)
+                        .build();
+
+                InventoryService inventoryService = new InventoryService(itemDao);
+                inventoryService.decreaseItemQuantity(request, decreaseItemQuantityResponseObserver);
+
+                verify(decreaseItemQuantityResponseObserver).onNext(decreaseItemQuantityCaptor.capture());
+                verify(decreaseItemQuantityResponseObserver).onCompleted();
+
+                DecreaseItemQuantityResponse response = decreaseItemQuantityCaptor.getValue();
+                assertEquals(404, response.getStatus());
+                assertEquals("Item not found", response.getError());
+
+                verify(itemDao, never()).save(any(Item.class));
+            }
+
+            @Test
+            void expectsToReturnStatus500InternalServerErrorForDatabaseError() {
+                int itemId = 123;
+
+                when(itemDao.findById((long) itemId)).thenThrow(new RuntimeException("Database error"));
+
+                DecreaseItemQuantityRequest request = DecreaseItemQuantityRequest.newBuilder()
+                        .setId(itemId)
+                        .setQuantity(5)
+                        .build();
+
+                InventoryService inventoryService = new InventoryService(itemDao);
+                inventoryService.decreaseItemQuantity(request, decreaseItemQuantityResponseObserver);
+
+                verify(decreaseItemQuantityResponseObserver).onNext(decreaseItemQuantityCaptor.capture());
+                verify(decreaseItemQuantityResponseObserver).onCompleted();
+
+                DecreaseItemQuantityResponse response = decreaseItemQuantityCaptor.getValue();
+                assertEquals(500, response.getStatus());
+                assertEquals("Internal server error", response.getError());
+
+                verify(itemDao, never()).save(any(Item.class));
+            }
+
+        }
     }
 }

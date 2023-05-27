@@ -204,4 +204,51 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
         }
         responseObserver.onCompleted();
     }
+
+    @Override
+    public void decreaseItemQuantity(DecreaseItemQuantityRequest request, StreamObserver<DecreaseItemQuantityResponse> responseObserver) {
+        int itemId = request.getId();
+        int quantityToDecrease = request.getQuantity();
+        try {
+            Item item = itemDao.findById((long) itemId)
+                    .orElse(null);
+
+            if (item != null) {
+                int currentQuantity = item.getQuantity();
+                if (currentQuantity >= quantityToDecrease) {
+                    item.setQuantity(currentQuantity - quantityToDecrease);
+                    itemDao.save(item);
+
+                    DecreaseItemQuantityResponse response = DecreaseItemQuantityResponse.newBuilder()
+                            .setStatus(200)
+                            .build();
+
+                    responseObserver.onNext(response);
+                } else {
+                    DecreaseItemQuantityResponse response = DecreaseItemQuantityResponse.newBuilder()
+                            .setStatus(400)
+                            .setError("Insufficient quantity")
+                            .build();
+
+                    responseObserver.onNext(response);
+                }
+            } else {
+                DecreaseItemQuantityResponse response = DecreaseItemQuantityResponse.newBuilder()
+                        .setStatus(404)
+                        .setError("Item not found")
+                        .build();
+
+                responseObserver.onNext(response);
+            }
+        } catch (Exception e) {
+            DecreaseItemQuantityResponse response = DecreaseItemQuantityResponse.newBuilder()
+                    .setStatus(500)
+                    .setError("Internal server error")
+                    .build();
+
+            responseObserver.onNext(response);
+        }
+        responseObserver.onCompleted();
+    }
 }
+
