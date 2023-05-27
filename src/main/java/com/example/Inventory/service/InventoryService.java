@@ -121,4 +121,55 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
             responseObserver.onCompleted();
         }
     }
+
+    @Override
+    public void updateItem(UpdateItemRequest request, StreamObserver<UpdateItemResponse> responseObserver) {
+        try {
+            int itemId = request.getId();
+            String name = request.getName();
+            int quantity = request.getQuantity();
+            double price = request.getPrice();
+
+            Item item = itemDao.findById((long) itemId)
+                    .orElse(null);
+
+            if (item != null) {
+                item.setName(name);
+                item.setQuantity(quantity);
+                item.setPrice(price);
+
+                Item updatedItem = itemDao.save(item);
+
+                GetItemData itemData = GetItemData.newBuilder()
+                        .setId((int) updatedItem.getItemId())
+                        .setName(updatedItem.getName())
+                        .setQuantity(updatedItem.getQuantity())
+                        .setPrice(updatedItem.getPrice())
+                        .build();
+
+                UpdateItemResponse response = UpdateItemResponse.newBuilder()
+                        .setStatus(200)
+                        .setData(itemData)
+                        .build();
+
+                responseObserver.onNext(response);
+            } else {
+                UpdateItemResponse response = UpdateItemResponse.newBuilder()
+                        .setStatus(404)
+                        .setError("Item not found")
+                        .build();
+
+                responseObserver.onNext(response);
+            }
+        } catch (Exception e) {
+            UpdateItemResponse response = UpdateItemResponse.newBuilder()
+                    .setStatus(500)
+                    .setError("Internal server error")
+                    .build();
+
+            responseObserver.onNext(response);
+        }
+
+        responseObserver.onCompleted();
+    }
 }

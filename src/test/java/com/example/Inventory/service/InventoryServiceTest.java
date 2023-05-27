@@ -34,11 +34,17 @@ class InventoryServiceTest {
     @Mock
     private StreamObserver<GetAllItemsResponse> getAllItemsResponseObserver;
 
+    @Mock
+    private StreamObserver<UpdateItemResponse> updateItemResponseObserver;
+
     @Captor
     private ArgumentCaptor<GetItemResponse> getItemResponseCaptor;
 
     @Captor
     private ArgumentCaptor<GetAllItemsResponse> getAllItemsResponseCaptor;
+
+    @Captor
+    private ArgumentCaptor<UpdateItemResponse> updateItemResponseCaptor;
 
     private InventoryService inventoryService;
 
@@ -125,7 +131,7 @@ class InventoryServiceTest {
         }
 
         @Test
-        void expectsToReturnStatus404NotFoundForItemIdNotInInventory() {
+        void expectsToReturnStatus404NotFoundForItemNotInInventory() {
             int itemId = 123;
 
             when(itemDao.findById((long) itemId)).thenReturn(Optional.empty());
@@ -162,7 +168,7 @@ class InventoryServiceTest {
     }
 
     @Nested
-    public class TestsForGetAllItemsMethod {
+    public class GetAllItemsMethodTest {
         @Test
         void expectsToReturnStatus200OKAndAllItems() {
             List<Item> items = Arrays.asList(
@@ -215,5 +221,103 @@ class InventoryServiceTest {
             assertEquals(500, response.getStatus());
             assertEquals("Internal server error", response.getError());
         }
+    }
+
+    @Nested
+    public class UpdateItemTest {
+        @Test
+        void expectsToReturnStatus200OKAndUpdatedItemForValidRequest() {
+            int itemId = 123;
+            String newName = "Updated Item";
+            int newQuantity = 8;
+            double newPrice = 12.99;
+
+            Item item = new Item("Test Item", 1001, 9.99, 5);
+            item.setItemId((long) itemId);
+
+            when(itemDao.findById((long) itemId)).thenReturn(Optional.of(item));
+            when(itemDao.save(item)).thenReturn(item);
+
+            UpdateItemRequest request = UpdateItemRequest.newBuilder()
+                    .setId(itemId)
+                    .setName(newName)
+                    .setQuantity(newQuantity)
+                    .setPrice(newPrice)
+                    .build();
+
+            InventoryService inventoryService = new InventoryService(itemDao);
+            inventoryService.updateItem(request, updateItemResponseObserver);
+
+            verify(updateItemResponseObserver).onNext(updateItemResponseCaptor.capture());
+            verify(updateItemResponseObserver).onCompleted();
+
+            UpdateItemResponse response = updateItemResponseCaptor.getValue();
+            assertEquals(200, response.getStatus());
+
+            GetItemData itemData = response.getData();
+            assertEquals(itemId, itemData.getId());
+            assertEquals(newName, itemData.getName());
+            assertEquals(newQuantity, itemData.getQuantity());
+            assertEquals(newPrice, itemData.getPrice());
+        }
+
+        @Test
+        void expectsToReturnStatus404NotFoundForForItemNotInInventory() {
+            int itemId = 123;
+            String newName = "Updated Item";
+            int newQuantity = 8;
+            double newPrice = 12.99;
+
+            when(itemDao.findById((long) itemId)).thenReturn(Optional.empty());
+
+            UpdateItemRequest request = UpdateItemRequest.newBuilder()
+                    .setId(itemId)
+                    .setName(newName)
+                    .setQuantity(newQuantity)
+                    .setPrice(newPrice)
+                    .build();
+
+            InventoryService inventoryService = new InventoryService(itemDao);
+            inventoryService.updateItem(request, updateItemResponseObserver);
+
+            verify(updateItemResponseObserver).onNext(updateItemResponseCaptor.capture());
+            verify(updateItemResponseObserver).onCompleted();
+
+            UpdateItemResponse response = updateItemResponseCaptor.getValue();
+            assertEquals(404, response.getStatus());
+            assertEquals("Item not found", response.getError());
+        }
+
+        @Test
+        void expectsToReturnStatus500InternalServerErrorForAnException() {
+            int itemId = 123;
+            String newName = "Updated Item";
+            int newQuantity = 8;
+            double newPrice = 12.99;
+
+            Item item = new Item("Test Item", 1001, 9.99, 5);
+            item.setItemId((long) itemId);
+
+            when(itemDao.findById((long) itemId)).thenReturn(Optional.of(item));
+            when(itemDao.save(item)).thenThrow(new RuntimeException("Database error"));
+
+            UpdateItemRequest request = UpdateItemRequest.newBuilder()
+                    .setId(itemId)
+                    .setName(newName)
+                    .setQuantity(newQuantity)
+                    .setPrice(newPrice)
+                    .build();
+
+            InventoryService inventoryService = new InventoryService(itemDao);
+            inventoryService.updateItem(request, updateItemResponseObserver);
+
+            verify(updateItemResponseObserver).onNext(updateItemResponseCaptor.capture());
+            verify(updateItemResponseObserver).onCompleted();
+
+            UpdateItemResponse response = updateItemResponseCaptor.getValue();
+            assertEquals(500, response.getStatus());
+            assertEquals("Internal server error", response.getError());
+        }
+
     }
 }

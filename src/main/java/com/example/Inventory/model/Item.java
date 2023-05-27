@@ -30,10 +30,6 @@ public class Item {
         this.quantity = quantity;
     }
 
-    public void setItemId(Long itemId) {
-        this.itemId = itemId;
-    }
-
     public long getItemId() {
         return itemId;
     }
@@ -52,5 +48,21 @@ public class Item {
 
     public int getQuantity() {
         return quantity;
+    }
+
+    public void setItemId(Long itemId) {
+        this.itemId = itemId;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
     }
 }
