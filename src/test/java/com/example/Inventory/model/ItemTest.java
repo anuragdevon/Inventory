@@ -1,6 +1,5 @@
 package com.example.Inventory.model;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,15 +44,11 @@ class ItemTest {
 
     @Test
     void expectsToThrowErrorForNegativeQuantityForNewItemCreation() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            new Item(2, "Negative Quantity Item", 1002, 9.99, -5);
-        });
+        assertThrows(IllegalArgumentException.class, () -> new Item(2, "Negative Quantity Item", 1002, 9.99, -5));
     }
 
     @Test
     void expectsToThrowErrorForNegativePriceForNewItemCreation() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            new Item(3, "Negative Price Item", 1003, -9.99, 10);
-        });
+        assertThrows(IllegalArgumentException.class, () -> new Item(3, "Negative Price Item", 1003, -9.99, 10));
     }
 }
