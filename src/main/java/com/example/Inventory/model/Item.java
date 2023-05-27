@@ -18,7 +18,7 @@ public class Item {
             throw new IllegalArgumentException("item quantity cannot be negative");
         }
 
-        if (price < 0) {
+        if (price < 0.0) {
             throw new IllegalArgumentException("item price cannot be negative");
         }
         this.itemId = itemId;

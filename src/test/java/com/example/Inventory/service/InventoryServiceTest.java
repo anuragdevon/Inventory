@@ -26,11 +26,6 @@ class InventoryServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.initMocks(this);
+        inventoryService = new InventoryService(itemDao);
     }
-
-    @Test
-    void expectsToCreateValidInventoryServiceObject() {
-        assertDoesNotThrow(() -> {new InventoryService(itemDao);});
-    }
-
 }
