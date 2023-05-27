@@ -124,12 +124,11 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
 
     @Override
     public void updateItem(UpdateItemRequest request, StreamObserver<UpdateItemResponse> responseObserver) {
+        int itemId = request.getId();
+        String name = request.getName();
+        int quantity = request.getQuantity();
+        double price = request.getPrice();
         try {
-            int itemId = request.getId();
-            String name = request.getName();
-            int quantity = request.getQuantity();
-            double price = request.getPrice();
-
             Item item = itemDao.findById((long) itemId)
                     .orElse(null);
 
@@ -169,7 +168,40 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
 
             responseObserver.onNext(response);
         }
+        responseObserver.onCompleted();
+    }
 
+    @Override
+    public void deleteItem(DeleteItemRequest request, StreamObserver<DeleteItemResponse> responseObserver) {
+        int itemId = request.getId();
+        try {
+            Item item = itemDao.findById((long) itemId)
+                    .orElse(null);
+
+            if (item != null) {
+                itemDao.delete(item);
+
+                DeleteItemResponse response = DeleteItemResponse.newBuilder()
+                        .setStatus(200)
+                        .build();
+
+                responseObserver.onNext(response);
+            } else {
+                DeleteItemResponse response = DeleteItemResponse.newBuilder()
+                        .setStatus(404)
+                        .setError("Item not found")
+                        .build();
+
+                responseObserver.onNext(response);
+            }
+        } catch (Exception e) {
+            DeleteItemResponse response = DeleteItemResponse.newBuilder()
+                    .setStatus(500)
+                    .setError("Internal server error")
+                    .build();
+
+            responseObserver.onNext(response);
+        }
         responseObserver.onCompleted();
     }
 }

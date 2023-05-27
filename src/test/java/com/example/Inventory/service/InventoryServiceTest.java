@@ -37,6 +37,9 @@ class InventoryServiceTest {
     @Mock
     private StreamObserver<UpdateItemResponse> updateItemResponseObserver;
 
+    @Mock
+    private StreamObserver<DeleteItemResponse> deleteItemResponseObserver;
+
     @Captor
     private ArgumentCaptor<GetItemResponse> getItemResponseCaptor;
 
@@ -45,6 +48,9 @@ class InventoryServiceTest {
 
     @Captor
     private ArgumentCaptor<UpdateItemResponse> updateItemResponseCaptor;
+
+    @Captor
+    private ArgumentCaptor<DeleteItemResponse> deleteItemResponseCaptor;
 
     private InventoryService inventoryService;
 
@@ -317,6 +323,80 @@ class InventoryServiceTest {
             UpdateItemResponse response = updateItemResponseCaptor.getValue();
             assertEquals(500, response.getStatus());
             assertEquals("Internal server error", response.getError());
+        }
+    }
+
+    @Nested
+    public class DeleteItemTest {
+        @Test
+        void expectsToDeleteItemAndReturnStatus200ForExistingItem() {
+            int itemId = 123;
+
+            Item item = new Item("Test Item", 1001, 9.99, 5);
+            item.setItemId((long) itemId);
+
+            when(itemDao.findById((long) itemId)).thenReturn(Optional.of(item));
+
+            DeleteItemRequest request = DeleteItemRequest.newBuilder()
+                    .setId(itemId)
+                    .build();
+
+            InventoryService inventoryService = new InventoryService(itemDao);
+            inventoryService.deleteItem(request, deleteItemResponseObserver);
+
+            verify(deleteItemResponseObserver).onNext(deleteItemResponseCaptor.capture());
+            verify(deleteItemResponseObserver).onCompleted();
+
+            DeleteItemResponse response = deleteItemResponseCaptor.getValue();
+            assertEquals(200, response.getStatus());
+
+            verify(itemDao).delete(item);
+        }
+
+        @Test
+        void expectsToReturnStatus404NotFoundForNonExistingItem() {
+            int itemId = 123;
+
+            when(itemDao.findById((long) itemId)).thenReturn(Optional.empty());
+
+            DeleteItemRequest request = DeleteItemRequest.newBuilder()
+                    .setId(itemId)
+                    .build();
+
+            InventoryService inventoryService = new InventoryService(itemDao);
+            inventoryService.deleteItem(request, deleteItemResponseObserver);
+
+            verify(deleteItemResponseObserver).onNext(deleteItemResponseCaptor.capture());
+            verify(deleteItemResponseObserver).onCompleted();
+
+            DeleteItemResponse response = deleteItemResponseCaptor.getValue();
+            assertEquals(404, response.getStatus());
+            assertEquals("Item not found", response.getError());
+
+            verify(itemDao, never()).delete(any(Item.class));
+        }
+
+        @Test
+        void expectsToReturnStatus500InternalServerErrorForDatabaseError() {
+            int itemId = 123;
+
+            when(itemDao.findById((long) itemId)).thenThrow(new RuntimeException("Database error"));
+
+            DeleteItemRequest request = DeleteItemRequest.newBuilder()
+                    .setId(itemId)
+                    .build();
+
+            InventoryService inventoryService = new InventoryService(itemDao);
+            inventoryService.deleteItem(request, deleteItemResponseObserver);
+
+            verify(deleteItemResponseObserver).onNext(deleteItemResponseCaptor.capture());
+            verify(deleteItemResponseObserver).onCompleted();
+
+            DeleteItemResponse response = deleteItemResponseCaptor.getValue();
+            assertEquals(500, response.getStatus());
+            assertEquals("Internal server error", response.getError());
+
+            verify(itemDao, never()).delete(any(Item.class));
         }
 
     }
