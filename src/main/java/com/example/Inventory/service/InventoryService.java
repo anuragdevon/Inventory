@@ -89,4 +89,36 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
             responseObserver.onCompleted();
         }
     }
+
+    @Override
+    public void getAllItems(GetAllItemsRequest request, StreamObserver<GetAllItemsResponse> responseObserver) {
+        try {
+            List<Item> items = itemDao.findAll();
+
+            List<GetItemData> itemDataList = items.stream()
+                    .map(item -> GetItemData.newBuilder()
+                            .setId((int) item.getItemId())
+                            .setName(item.getName())
+                            .setQuantity(item.getQuantity())
+                            .setPrice(item.getPrice())
+                            .build())
+                    .collect(Collectors.toList());
+
+            GetAllItemsResponse response = GetAllItemsResponse.newBuilder()
+                    .setStatus(200)
+                    .addAllData(itemDataList)
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            GetAllItemsResponse response = GetAllItemsResponse.newBuilder()
+                    .setStatus(500)
+                    .setError("Internal server error")
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        }
+    }
 }

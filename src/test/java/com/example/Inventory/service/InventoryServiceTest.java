@@ -14,6 +14,8 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.*;
@@ -29,8 +31,14 @@ class InventoryServiceTest {
     @Mock
     private StreamObserver<GetItemResponse> getItemResponseObserver;
 
+    @Mock
+    private StreamObserver<GetAllItemsResponse> getAllItemsResponseObserver;
+
     @Captor
     private ArgumentCaptor<GetItemResponse> getItemResponseCaptor;
+
+    @Captor
+    private ArgumentCaptor<GetAllItemsResponse> getAllItemsResponseCaptor;
 
     private InventoryService inventoryService;
 
@@ -148,6 +156,62 @@ class InventoryServiceTest {
             verify(getItemResponseObserver).onCompleted();
 
             GetItemResponse response = getItemResponseCaptor.getValue();
+            assertEquals(500, response.getStatus());
+            assertEquals("Internal server error", response.getError());
+        }
+    }
+
+    @Nested
+    public class TestsForGetAllItemsMethod {
+        @Test
+        void expectsToReturnStatus200OKAndAllItems() {
+            List<Item> items = Arrays.asList(
+                    new Item("Item 1", 1001, 9.99, 5),
+                    new Item("Item 2", 1002, 14.99, 10),
+                    new Item("Item 3", 1003, 19.99, 7)
+            );
+            items.get(0).setItemId(1L);
+            items.get(1).setItemId(2L);
+            items.get(2).setItemId(3L);
+
+            when(itemDao.findAll()).thenReturn(items);
+
+            GetAllItemsRequest request = GetAllItemsRequest.newBuilder().build();
+
+            inventoryService.getAllItems(request, getAllItemsResponseObserver);
+
+            verify(getAllItemsResponseObserver).onNext(getAllItemsResponseCaptor.capture());
+            verify(getAllItemsResponseObserver).onCompleted();
+
+            GetAllItemsResponse response = getAllItemsResponseCaptor.getValue();
+            assertEquals(200, response.getStatus());
+
+            List<GetItemData> itemDataList = response.getDataList();
+            assertEquals(items.size(), itemDataList.size());
+
+            for (int i = 0; i < items.size(); i++) {
+                Item item = items.get(i);
+                GetItemData itemData = itemDataList.get(i);
+
+                assertEquals(item.getItemId(), itemData.getId());
+                assertEquals(item.getName(), itemData.getName());
+                assertEquals(item.getQuantity(), itemData.getQuantity());
+                assertEquals(item.getPrice(), itemData.getPrice());
+            }
+        }
+
+        @Test
+        void expectsToReturnStatus500InternalServerErrorIfExceptionOccurs() {
+            when(itemDao.findAll()).thenThrow(new RuntimeException("Database error"));
+
+            GetAllItemsRequest request = GetAllItemsRequest.newBuilder().build();
+
+            inventoryService.getAllItems(request, getAllItemsResponseObserver);
+
+            verify(getAllItemsResponseObserver).onNext(getAllItemsResponseCaptor.capture());
+            verify(getAllItemsResponseObserver).onCompleted();
+
+            GetAllItemsResponse response = getAllItemsResponseCaptor.getValue();
             assertEquals(500, response.getStatus());
             assertEquals("Internal server error", response.getError());
         }
