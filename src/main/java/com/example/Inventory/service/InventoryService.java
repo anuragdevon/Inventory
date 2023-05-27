@@ -7,6 +7,9 @@ import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @GrpcService
 public class InventoryService extends InventoryGrpc.InventoryImplBase {
     private final ItemDao itemDao;
@@ -22,18 +25,27 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
         int quantity = request.getQuantity();
         double price = request.getPrice();
         long userId = request.getUserId();
+        try {
+            Item item = new Item(name, userId, price, quantity);
 
-        Item item = new Item(name, userId, price, quantity);
+            Item savedItem = itemDao.save(item);
 
-        Item savedItem = itemDao.save(item);
+            CreateItemResponse response = CreateItemResponse.newBuilder()
+                    .setStatus(201)
+                    .setId((int) savedItem.getItemId())
+                    .build();
 
-        CreateItemResponse response = CreateItemResponse.newBuilder()
-                .setStatus(201)
-                .setId((int) savedItem.getItemId())
-                .build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            CreateItemResponse response = CreateItemResponse.newBuilder()
+                    .setStatus(500)
+                    .setError("Internal server error")
+                    .build();
 
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        }
     }
 
     @Override

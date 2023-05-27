@@ -64,6 +64,27 @@ class InventoryServiceTest {
             verify(createItemResponseObserver).onNext(expectedResponse);
             verify(createItemResponseObserver).onCompleted();
         }
+
+        @Test
+        void expectsToReturnStatus500InternalServerErrorForDatabaseError() {
+            CreateItemRequest request = CreateItemRequest.newBuilder()
+                    .setName("Test Item")
+                    .setQuantity(5)
+                    .setUserId(1001)
+                    .setPrice(80.0)
+                    .build();
+
+            when(itemDao.save(any(Item.class))).thenThrow(new RuntimeException("Database error"));
+
+            inventoryService.createItem(request, createItemResponseObserver);
+
+            CreateItemResponse expectedResponse = CreateItemResponse.newBuilder()
+                    .setStatus(500)
+                    .setError("Internal server error")
+                    .build();
+            verify(createItemResponseObserver).onNext(expectedResponse);
+            verify(createItemResponseObserver).onCompleted();
+        }
     }
 
     @Nested
@@ -114,7 +135,7 @@ class InventoryServiceTest {
         }
 
         @Test
-        void shouldHandleExceptionDuringItemRetrieval() {
+        void expectsToReturnStatus500InternalServerErrorForAnException() {
             int itemId = 123;
 
             when(itemDao.findById((long) itemId)).thenThrow(new RuntimeException("Database error"));
