@@ -12,7 +12,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 @SpringBootApplication
 public class InventoryServer {
 
-    private static final int PORT = 9090;
+    private static final int PORT = 8020;
 
     @Autowired
     private InventoryService inventoryService;
@@ -24,7 +24,6 @@ public class InventoryServer {
     }
 
     private void startGrpcServer() throws Exception {
-        // Start the gRPC server
         Server server = ServerBuilder.forPort(PORT)
                 .addService(inventoryService)
                 .build();
@@ -33,7 +32,6 @@ public class InventoryServer {
 
         System.out.println("Inventory gRPC server started on port " + PORT);
 
-        // Shutdown the server gracefully
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Shutting down Inventory gRPC server...");
             server.shutdown();

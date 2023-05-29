@@ -32,7 +32,7 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
 
             CreateItemResponse response = CreateItemResponse.newBuilder()
                     .setStatus(201)
-                    .setId((int) savedItem.getItemId())
+                    .setId(Math.toIntExact(savedItem.getItemId()))
                     .build();
 
             responseObserver.onNext(response);
@@ -57,7 +57,7 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
 
             if (item != null) {
                 GetItemData itemData = GetItemData.newBuilder()
-                        .setId((int) item.getItemId())
+                        .setId(Math.toIntExact(item.getItemId()))
                         .setName(item.getName())
                         .setQuantity(item.getQuantity())
                         .setPrice(item.getPrice())
@@ -97,7 +97,7 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
 
             List<GetItemData> itemDataList = items.stream()
                     .map(item -> GetItemData.newBuilder()
-                            .setId((int) item.getItemId())
+                            .setId(Math.toIntExact(item.getItemId()))
                             .setName(item.getName())
                             .setQuantity(item.getQuantity())
                             .setPrice(item.getPrice())
@@ -129,8 +129,7 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
         int quantity = request.getQuantity();
         double price = request.getPrice();
         try {
-            Item item = itemDao.findById((long) itemId)
-                    .orElse(null);
+            Item item = itemDao.findById((long) itemId).orElse(null);
 
             if (item != null) {
                 item.setName(name);
@@ -140,7 +139,7 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
                 Item updatedItem = itemDao.save(item);
 
                 GetItemData itemData = GetItemData.newBuilder()
-                        .setId((int) updatedItem.getItemId())
+                        .setId(Math.toIntExact(updatedItem.getItemId()))
                         .setName(updatedItem.getName())
                         .setQuantity(updatedItem.getQuantity())
                         .setPrice(updatedItem.getPrice())
@@ -155,7 +154,7 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
             } else {
                 UpdateItemResponse response = UpdateItemResponse.newBuilder()
                         .setStatus(404)
-                        .setError("Item not found")
+                        .setError(String.valueOf(itemId))
                         .build();
 
                 responseObserver.onNext(response);

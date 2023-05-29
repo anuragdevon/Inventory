@@ -1,20 +1,19 @@
 package com.example.Inventory.model;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
+import javax.persistence.*;
 
 @Entity
+@Table(name = "items")
 public class Item {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long itemId;
     private String name;
     private long userId;
     private double price;
     private int quantity;
+
+    public Item() {}
 
     public Item(String name, long userId, double price, int quantity) {
         if (quantity < 0) {
@@ -30,7 +29,7 @@ public class Item {
         this.quantity = quantity;
     }
 
-    public long getItemId() {
+    public Long getItemId() {
         return itemId;
     }
 

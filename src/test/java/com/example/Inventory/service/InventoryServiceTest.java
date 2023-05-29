@@ -85,7 +85,7 @@ class InventoryServiceTest {
 
             CreateItemResponse expectedResponse = CreateItemResponse.newBuilder()
                     .setStatus(201)
-                    .setId((int) savedItem.getItemId())
+                    .setId(Math.toIntExact(savedItem.getItemId()))
                     .build();
             verify(createItemResponseObserver).onNext(expectedResponse);
             verify(createItemResponseObserver).onCompleted();
