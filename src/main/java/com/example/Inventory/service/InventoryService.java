@@ -154,7 +154,7 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
             } else {
                 UpdateItemResponse response = UpdateItemResponse.newBuilder()
                         .setStatus(404)
-                        .setError(String.valueOf(itemId))
+                        .setError("Item not found")
                         .build();
 
                 responseObserver.onNext(response);
