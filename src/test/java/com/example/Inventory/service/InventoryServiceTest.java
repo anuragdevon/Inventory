@@ -383,7 +383,7 @@ class InventoryServiceTest {
         }
 
         @Test
-        void expectsToReturnStatus500InternalServerErrorForDatabaseError() {
+        void expectsToReturnStatus500InternalServerErrorForAnException() {
             int itemId = 123;
 
             when(itemDao.findById((long) itemId)).thenThrow(new RuntimeException("Database error"));
