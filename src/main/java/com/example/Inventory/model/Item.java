@@ -1,11 +1,11 @@
 package com.example.Inventory.model;
 
 import javax.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
+import lombok.Data;
+
+@Data
+@Entity
 public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
