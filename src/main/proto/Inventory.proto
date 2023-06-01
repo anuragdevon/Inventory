@@ -8,18 +8,11 @@ package com.example.Inventory;
 service Inventory {
   rpc CreateItem(CreateItemRequest) returns (CreateItemResponse) {}
   rpc GetItem(GetItemRequest) returns (GetItemResponse) {}
+  rpc GetAllInventoryItems(GetAllInventoryItemsRequest) returns (GetAllInventoryItemsResponse) {}
   rpc GetAllItems(GetAllItemsRequest) returns (GetAllItemsResponse) {}
   rpc UpdateItem(UpdateItemRequest) returns (UpdateItemResponse) {}
   rpc DeleteItem(DeleteItemRequest) returns (DeleteItemResponse) {}
   rpc DecreaseItemQuantity(DecreaseItemQuantityRequest) returns (DecreaseItemQuantityResponse) {}
-}
-
-message HelloRequest {
-  string name = 1;
-}
-
-message HelloReply {
-  string message = 1;
 }
 
 message CreateItemRequest {
@@ -37,6 +30,7 @@ message CreateItemResponse {
 
 message GetItemRequest {
   int32 id = 1;
+  int32 userId = 2;
 }
 
 message GetItemData {
@@ -52,7 +46,17 @@ message GetItemResponse {
   GetItemData data = 3;
 }
 
-message GetAllItemsRequest {}
+message GetAllInventoryItemsRequest {}
+
+message GetAllInventoryItemsResponse {
+  int32 status = 1;
+  string error = 2;
+  repeated GetItemData data = 3;
+}
+
+message GetAllItemsRequest {
+  int32 userId = 4;
+}
 
 message GetAllItemsResponse {
   int32 status = 1;
@@ -65,6 +69,7 @@ message UpdateItemRequest {
   string name = 2;
   int32 quantity = 3;
   double price = 4;
+  int32 userId = 5;
 }
 
 message UpdateItemResponse {
@@ -75,6 +80,7 @@ message UpdateItemResponse {
 
 message DeleteItemRequest {
   int32 id = 1;
+  int32 userId = 2;
 }
 
 message DeleteItemResponse {

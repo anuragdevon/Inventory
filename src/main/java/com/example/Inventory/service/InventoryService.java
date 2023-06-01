@@ -92,6 +92,7 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
 
     @Override
     public void getAllItems(GetAllItemsRequest request, StreamObserver<GetAllItemsResponse> responseObserver) {
+        long userId = request.getUserId();
         try {
             List<Item> items = itemDao.findAll();
 
@@ -123,13 +124,46 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
     }
 
     @Override
+    public void getAllInventoryItems(GetAllInventoryItemsRequest request, StreamObserver<GetAllInventoryItemsResponse> responseObserver) {
+        try {
+            List<Item> items = itemDao.findAll();
+
+            List<GetItemData> itemDataList = items.stream()
+                    .map(item -> GetItemData.newBuilder()
+                            .setId(Math.toIntExact(item.getItemId()))
+                            .setName(item.getName())
+                            .setQuantity(item.getQuantity())
+                            .setPrice(item.getPrice())
+                            .build())
+                    .collect(Collectors.toList());
+
+            GetAllInventoryItemsResponse response = GetAllInventoryItemsResponse.newBuilder()
+                    .setStatus(200)
+                    .addAllData(itemDataList)
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            GetAllInventoryItemsResponse response = GetAllInventoryItemsResponse.newBuilder()
+                    .setStatus(500)
+                    .setError("Internal server error")
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        }
+    }
+
+    @Override
     public void updateItem(UpdateItemRequest request, StreamObserver<UpdateItemResponse> responseObserver) {
         int itemId = request.getId();
         String name = request.getName();
         int quantity = request.getQuantity();
         double price = request.getPrice();
+        long userId = request.getUserId();
         try {
-            Item item = itemDao.findById((long) itemId).orElse(null);
+            Item item = itemDao.findByItemIdAndUserId((long) itemId, userId).orElse(null);
 
             if (item != null) {
                 item.setName(name);
@@ -173,9 +207,9 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
     @Override
     public void deleteItem(DeleteItemRequest request, StreamObserver<DeleteItemResponse> responseObserver) {
         int itemId = request.getId();
+        long userId = request.getUserId();
         try {
-            Item item = itemDao.findById((long) itemId)
-                    .orElse(null);
+            Item item = itemDao.findByItemIdAndUserId((long) itemId, userId).orElse(null);
 
             if (item != null) {
                 itemDao.delete(item);

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import static org.mockito.Mockito.mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
@@ -25,29 +26,14 @@ class InventoryServiceTest {
     @Mock
     private ItemDao itemDao;
 
-    @Mock
-    private StreamObserver<CreateItemResponse> createItemResponseObserver;
-
-    @Mock
-    private StreamObserver<GetItemResponse> getItemResponseObserver;
-
-    @Mock
-    private StreamObserver<GetAllItemsResponse> getAllItemsResponseObserver;
-
-    @Mock
-    private StreamObserver<UpdateItemResponse> updateItemResponseObserver;
-
-    @Mock
-    private StreamObserver<DeleteItemResponse> deleteItemResponseObserver;
-
-    @Mock
-    private StreamObserver<DecreaseItemQuantityResponse> decreaseItemQuantityResponseObserver;
-
     @Captor
     private ArgumentCaptor<GetItemResponse> getItemResponseCaptor;
 
     @Captor
     private ArgumentCaptor<GetAllItemsResponse> getAllItemsResponseCaptor;
+
+    @Captor
+    private ArgumentCaptor<GetAllInventoryItemsResponse> getAllInventoryItemsResponseCaptor;
 
     @Captor
     private ArgumentCaptor<UpdateItemResponse> updateItemResponseCaptor;
@@ -69,6 +55,7 @@ class InventoryServiceTest {
     public class CreateItemTest {
         @Test
         void expectsToReturnStatus201CreatedResponseForValidRequest() {
+            StreamObserver<CreateItemResponse> createItemResponseObserver = mock(StreamObserver.class);
             CreateItemRequest request = CreateItemRequest.newBuilder()
                     .setName("Test Item")
                     .setQuantity(5)
@@ -93,6 +80,7 @@ class InventoryServiceTest {
 
         @Test
         void expectsToReturnStatus500InternalServerErrorForDatabaseError() {
+            StreamObserver<CreateItemResponse> createItemResponseObserver = mock(StreamObserver.class);
             CreateItemRequest request = CreateItemRequest.newBuilder()
                     .setName("Test Item")
                     .setQuantity(5)
@@ -117,6 +105,8 @@ class InventoryServiceTest {
     public class GetItemTest {
         @Test
         void expectsToReturnStatus200OKAndItemForValidItemIdInRequest() {
+            StreamObserver<GetItemResponse> getItemResponseObserver = mock(StreamObserver.class);
+
             int itemId = 123;
             Item item = new Item("Test Item", 1001, 9.99, 5);
             item.setItemId(123L);
@@ -144,6 +134,7 @@ class InventoryServiceTest {
 
         @Test
         void expectsToReturnStatus404NotFoundForItemNotInInventory() {
+            StreamObserver<GetItemResponse> getItemResponseObserver = mock(StreamObserver.class);
             int itemId = 123;
 
             when(itemDao.findById((long) itemId)).thenReturn(Optional.empty());
@@ -162,6 +153,7 @@ class InventoryServiceTest {
 
         @Test
         void expectsToReturnStatus500InternalServerErrorForAnException() {
+            StreamObserver<GetItemResponse> getItemResponseObserver = mock(StreamObserver.class);
             int itemId = 123;
 
             when(itemDao.findById((long) itemId)).thenThrow(new RuntimeException("Database error"));
@@ -180,13 +172,14 @@ class InventoryServiceTest {
     }
 
     @Nested
-    public class GetAllItemsMethodTest {
+    public class GetAllItemsTest {
         @Test
         void expectsToReturnStatus200OKAndAllItems() {
+            StreamObserver<GetAllItemsResponse> getAllItemsResponseObserver = mock(StreamObserver.class);
             List<Item> items = Arrays.asList(
                     new Item("Item 1", 1001, 9.99, 5),
-                    new Item("Item 2", 1002, 14.99, 10),
-                    new Item("Item 3", 1003, 19.99, 7)
+                    new Item("Item 2", 1001, 14.99, 10),
+                    new Item("Item 3", 1001, 19.99, 7)
             );
             items.get(0).setItemId(1L);
             items.get(1).setItemId(2L);
@@ -194,7 +187,9 @@ class InventoryServiceTest {
 
             when(itemDao.findAll()).thenReturn(items);
 
-            GetAllItemsRequest request = GetAllItemsRequest.newBuilder().build();
+            GetAllItemsRequest request = GetAllItemsRequest.newBuilder()
+                    .setUserId(1001)
+                    .build();
 
             inventoryService.getAllItems(request, getAllItemsResponseObserver);
 
@@ -220,9 +215,10 @@ class InventoryServiceTest {
 
         @Test
         void expectsToReturnStatus500InternalServerErrorIfExceptionOccurs() {
+            StreamObserver<GetAllItemsResponse> getAllItemsResponseObserver = mock(StreamObserver.class);
             when(itemDao.findAll()).thenThrow(new RuntimeException("Database error"));
 
-            GetAllItemsRequest request = GetAllItemsRequest.newBuilder().build();
+            GetAllItemsRequest request = GetAllItemsRequest.newBuilder().setUserId(1001).build();
 
             inventoryService.getAllItems(request, getAllItemsResponseObserver);
 
@@ -236,18 +232,78 @@ class InventoryServiceTest {
     }
 
     @Nested
+    public class GetAllInventoryItemsTest {
+        @Test
+        void expectsToReturnStatus200OKAndAllItems() {
+            StreamObserver<GetAllInventoryItemsResponse> getAllInventoryItemsResponseObserver = mock(StreamObserver.class);
+            List<Item> items = Arrays.asList(
+                    new Item("Item 1", 1001, 9.99, 5),
+                    new Item("Item 2", 1001, 14.99, 10),
+                    new Item("Item 3", 1001, 19.99, 7)
+            );
+            items.get(0).setItemId(1L);
+            items.get(1).setItemId(2L);
+            items.get(2).setItemId(3L);
+
+            when(itemDao.findAll()).thenReturn(items);
+
+            GetAllInventoryItemsRequest request = GetAllInventoryItemsRequest.newBuilder().build();
+
+            inventoryService.getAllInventoryItems(request, getAllInventoryItemsResponseObserver);
+
+            verify(getAllInventoryItemsResponseObserver).onNext(getAllInventoryItemsResponseCaptor.capture());
+            verify(getAllInventoryItemsResponseObserver).onCompleted();
+
+            GetAllInventoryItemsResponse response = getAllInventoryItemsResponseCaptor.getValue();
+            assertEquals(200, response.getStatus());
+
+            List<GetItemData> itemDataList = response.getDataList();
+            assertEquals(items.size(), itemDataList.size());
+
+            for (int i = 0; i < items.size(); i++) {
+                Item item = items.get(i);
+                GetItemData itemData = itemDataList.get(i);
+
+                assertEquals(item.getItemId(), itemData.getId());
+                assertEquals(item.getName(), itemData.getName());
+                assertEquals(item.getQuantity(), itemData.getQuantity());
+                assertEquals(item.getPrice(), itemData.getPrice());
+            }
+        }
+
+        @Test
+        void expectsToReturnStatus500InternalServerErrorIfExceptionOccurs() {
+            StreamObserver<GetAllInventoryItemsResponse> getAllInventoryItemsResponseObserver = mock(StreamObserver.class);
+            when(itemDao.findAll()).thenThrow(new RuntimeException("Database error"));
+
+            GetAllInventoryItemsRequest request = GetAllInventoryItemsRequest.newBuilder().build();
+
+            inventoryService.getAllInventoryItems(request, getAllInventoryItemsResponseObserver);
+
+            verify(getAllInventoryItemsResponseObserver).onNext(getAllInventoryItemsResponseCaptor.capture());
+            verify(getAllInventoryItemsResponseObserver).onCompleted();
+
+            GetAllInventoryItemsResponse response = getAllInventoryItemsResponseCaptor.getValue();
+            assertEquals(500, response.getStatus());
+            assertEquals("Internal server error", response.getError());
+        }
+    }
+
+    @Nested
     public class UpdateItemTest {
         @Test
         void expectsToReturnStatus200OKAndUpdatedItemForValidRequest() {
+            StreamObserver<UpdateItemResponse> updateItemResponseObserver = mock(StreamObserver.class);
             int itemId = 123;
             String newName = "Updated Item";
             int newQuantity = 8;
             double newPrice = 12.99;
+            Long userId = 1001L;
 
             Item item = new Item("Test Item", 1001, 9.99, 5);
             item.setItemId((long) itemId);
 
-            when(itemDao.findById((long) itemId)).thenReturn(Optional.of(item));
+            when(itemDao.findByItemIdAndUserId((long) itemId, userId)).thenReturn(Optional.of(item));
             when(itemDao.save(item)).thenReturn(item);
 
             UpdateItemRequest request = UpdateItemRequest.newBuilder()
@@ -255,6 +311,7 @@ class InventoryServiceTest {
                     .setName(newName)
                     .setQuantity(newQuantity)
                     .setPrice(newPrice)
+                    .setUserId(1001)
                     .build();
 
             InventoryService inventoryService = new InventoryService(itemDao);
@@ -275,18 +332,21 @@ class InventoryServiceTest {
 
         @Test
         void expectsToReturnStatus404NotFoundForForItemNotInInventory() {
+            StreamObserver<UpdateItemResponse> updateItemResponseObserver = mock(StreamObserver.class);
             int itemId = 123;
             String newName = "Updated Item";
             int newQuantity = 8;
             double newPrice = 12.99;
+            Long userId = 1001L;
 
-            when(itemDao.findById((long) itemId)).thenReturn(Optional.empty());
+            when(itemDao.findByItemIdAndUserId((long) itemId, userId)).thenReturn(Optional.empty());
 
             UpdateItemRequest request = UpdateItemRequest.newBuilder()
                     .setId(itemId)
                     .setName(newName)
                     .setQuantity(newQuantity)
                     .setPrice(newPrice)
+                    .setUserId(1001)
                     .build();
 
             InventoryService inventoryService = new InventoryService(itemDao);
@@ -302,15 +362,17 @@ class InventoryServiceTest {
 
         @Test
         void expectsToReturnStatus500InternalServerErrorForAnException() {
+            StreamObserver<UpdateItemResponse> updateItemResponseObserver = mock(StreamObserver.class);
             int itemId = 123;
             String newName = "Updated Item";
             int newQuantity = 8;
             double newPrice = 12.99;
+            Long userId = 1001L;
 
             Item item = new Item("Test Item", 1001, 9.99, 5);
             item.setItemId((long) itemId);
 
-            when(itemDao.findById((long) itemId)).thenReturn(Optional.of(item));
+            when(itemDao.findByItemIdAndUserId((long) itemId, userId)).thenReturn(Optional.of(item));
             when(itemDao.save(item)).thenThrow(new RuntimeException("Database error"));
 
             UpdateItemRequest request = UpdateItemRequest.newBuilder()
@@ -318,6 +380,7 @@ class InventoryServiceTest {
                     .setName(newName)
                     .setQuantity(newQuantity)
                     .setPrice(newPrice)
+                    .setUserId(1001)
                     .build();
 
             InventoryService inventoryService = new InventoryService(itemDao);
@@ -336,15 +399,18 @@ class InventoryServiceTest {
     public class DeleteItemTest {
         @Test
         void expectsToDeleteItemAndReturnStatus200ForExistingItem() {
+            StreamObserver<DeleteItemResponse> deleteItemResponseObserver = mock(StreamObserver.class);
             int itemId = 123;
+            Long userId = 1001L;
 
             Item item = new Item("Test Item", 1001, 9.99, 5);
             item.setItemId((long) itemId);
 
-            when(itemDao.findById((long) itemId)).thenReturn(Optional.of(item));
+            when(itemDao.findByItemIdAndUserId((long) itemId, userId)).thenReturn(Optional.of(item));
 
             DeleteItemRequest request = DeleteItemRequest.newBuilder()
                     .setId(itemId)
+                    .setUserId(1001)
                     .build();
 
             InventoryService inventoryService = new InventoryService(itemDao);
@@ -361,12 +427,15 @@ class InventoryServiceTest {
 
         @Test
         void expectsToReturnStatus404NotFoundForNonExistingItem() {
+            StreamObserver<DeleteItemResponse> deleteItemResponseObserver = mock(StreamObserver.class);
             int itemId = 123;
+            Long userId = 1001L;
 
-            when(itemDao.findById((long) itemId)).thenReturn(Optional.empty());
+            when(itemDao.findByItemIdAndUserId((long) itemId, userId)).thenReturn(Optional.empty());
 
             DeleteItemRequest request = DeleteItemRequest.newBuilder()
                     .setId(itemId)
+                    .setUserId(1001)
                     .build();
 
             InventoryService inventoryService = new InventoryService(itemDao);
@@ -384,12 +453,15 @@ class InventoryServiceTest {
 
         @Test
         void expectsToReturnStatus500InternalServerErrorForAnException() {
+            StreamObserver<DeleteItemResponse> deleteItemResponseObserver = mock(StreamObserver.class);
             int itemId = 123;
+            Long userId = 1001L;
 
-            when(itemDao.findById((long) itemId)).thenThrow(new RuntimeException("Database error"));
+            when(itemDao.findByItemIdAndUserId((long) itemId, userId)).thenThrow(new RuntimeException("Database error"));
 
             DeleteItemRequest request = DeleteItemRequest.newBuilder()
                     .setId(itemId)
+                    .setUserId(1001)
                     .build();
 
             InventoryService inventoryService = new InventoryService(itemDao);
@@ -409,6 +481,7 @@ class InventoryServiceTest {
         public class DecreaseItemQuantityTest {
             @Test
             void expectsToDecreaseItemQuantityAndReturnStatus200ForSufficientQuantity() {
+                StreamObserver<DecreaseItemQuantityResponse> decreaseItemQuantityResponseObserver = mock(StreamObserver.class);
                 int itemId = 123;
                 int currentQuantity = 10;
                 int quantityToDecrease = 5;
@@ -438,6 +511,7 @@ class InventoryServiceTest {
 
             @Test
             void expectsToReturnStatus400InsufficientQuantityForNotEnoughQuantity() {
+                StreamObserver<DecreaseItemQuantityResponse> decreaseItemQuantityResponseObserver = mock(StreamObserver.class);
                 int itemId = 123;
                 int currentQuantity = 5;
                 int quantityToDecrease = 10;
@@ -468,6 +542,7 @@ class InventoryServiceTest {
 
             @Test
             void expectsToReturnStatus404NotFoundForNonExistingItem() {
+                StreamObserver<DecreaseItemQuantityResponse> decreaseItemQuantityResponseObserver = mock(StreamObserver.class);
                 int itemId = 123;
 
                 when(itemDao.findById((long) itemId)).thenReturn(Optional.empty());
@@ -492,6 +567,7 @@ class InventoryServiceTest {
 
             @Test
             void expectsToReturnStatus500InternalServerErrorForDatabaseError() {
+                StreamObserver<DecreaseItemQuantityResponse> decreaseItemQuantityResponseObserver = mock(StreamObserver.class);
                 int itemId = 123;
 
                 when(itemDao.findById((long) itemId)).thenThrow(new RuntimeException("Database error"));
