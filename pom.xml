@@ -121,7 +121,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<version>2.6.3</version>
 				<configuration>
-					<mainClass>com.example.Inventory.YourMainClass</mainClass>
+					<mainClass>com.example.Inventory.InventoryApplication</mainClass>
 				</configuration>
 				<executions>
 					<execution>
