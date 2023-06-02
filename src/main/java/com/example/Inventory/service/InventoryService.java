@@ -94,7 +94,7 @@ public class InventoryService extends InventoryGrpc.InventoryImplBase {
     public void getAllItems(GetAllItemsRequest request, StreamObserver<GetAllItemsResponse> responseObserver) {
         long userId = request.getUserId();
         try {
-            List<Item> items = itemDao.findAll();
+            List<Item> items = itemDao.findByUserId(userId);
 
             List<GetItemData> itemDataList = items.stream()
                     .map(item -> GetItemData.newBuilder()

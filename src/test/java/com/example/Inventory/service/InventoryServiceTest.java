@@ -174,7 +174,7 @@ class InventoryServiceTest {
     @Nested
     public class GetAllItemsTest {
         @Test
-        void expectsToReturnStatus200OKAndAllItems() {
+        void expectsToReturnStatus200OKAndAllItemsOfGivenUserId() {
             StreamObserver<GetAllItemsResponse> getAllItemsResponseObserver = mock(StreamObserver.class);
             List<Item> items = Arrays.asList(
                     new Item("Item 1", 1001, 9.99, 5),
@@ -185,7 +185,7 @@ class InventoryServiceTest {
             items.get(1).setItemId(2L);
             items.get(2).setItemId(3L);
 
-            when(itemDao.findAll()).thenReturn(items);
+            when(itemDao.findByUserId(1001L)).thenReturn(items);
 
             GetAllItemsRequest request = GetAllItemsRequest.newBuilder()
                     .setUserId(1001)
@@ -216,7 +216,7 @@ class InventoryServiceTest {
         @Test
         void expectsToReturnStatus500InternalServerErrorIfExceptionOccurs() {
             StreamObserver<GetAllItemsResponse> getAllItemsResponseObserver = mock(StreamObserver.class);
-            when(itemDao.findAll()).thenThrow(new RuntimeException("Database error"));
+            when(itemDao.findByUserId(1001L)).thenThrow(new RuntimeException("Database error"));
 
             GetAllItemsRequest request = GetAllItemsRequest.newBuilder().setUserId(1001).build();
 
